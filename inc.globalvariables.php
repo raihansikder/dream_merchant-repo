@@ -23,14 +23,14 @@ $tmpDir='temp';
 /*
  *	Database information and connection
 */
-
+/*
 $dbhost='localhost';
 $dbuser='dreammer_main';
 $dbpass='activation';
 $dbname='dreammer_main';
 mysql_select_db($dbname,mysql_connect($dbhost, $dbuser, $dbpass));
 /***********************************/
-/*
+
 $dbhost='localhost';
 $dbuser='dreammer_dev1';
 $dbpass='activation';
