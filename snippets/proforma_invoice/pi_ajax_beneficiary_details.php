@@ -1,0 +1,1 @@
+<?php include_once('../../config.php');$beneficiary_id=$_REQUEST[beneficiary_id];$r=mysql_query("select beneficiary_value from beneficiary where beneficiary_id='$beneficiary_id'")or die(mysql_error());$a=mysql_fetch_assoc($r);echo  $a[beneficiary_value];?>

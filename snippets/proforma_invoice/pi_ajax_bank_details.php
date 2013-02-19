@@ -1,0 +1,1 @@
+<?php include_once('../../config.php');$bank_details_id=$_REQUEST[bank_details_id];$r=mysql_query("select bank_details_value from bank_details where bank_details_id='$bank_details_id'")or die(mysql_error());$a=mysql_fetch_assoc($r);echo  $a[bank_details_value];?>
