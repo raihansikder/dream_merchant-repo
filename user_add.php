@@ -130,7 +130,7 @@ if(mysql_num_rows($r)){
 						<tr>
 							<td width="129">System username:</td>
 							<td width="457">
-								<input name="user_name" type="text" value="<?php echo addEditInputField('user_name'); ?>" size="30" maxlength="30" class="validate[required,custom[onlyLetterNumber],maxSize[20],minSize[5]]" <?php if($param!='add'){inputReadonly();}?> />
+								<input name="user_name" type="text" value="<?php echo addEditInputField('user_name'); ?>" size="30" maxlength="30" class="validate[required,maxSize[50],minSize[5]]" <?php if($param!='add'){inputReadonly();}?> />
 								<span class="small">This is username(unique id) for log-in. Once user is added it cannot be further changed</span>
 							</td>
 						</tr>
