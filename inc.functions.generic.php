@@ -103,7 +103,7 @@ function printAlert($valid,$alert){
 		else echo "red";
 		echo "'>";
 		for($i=0;$i<sizeof($alert);$i++){
-			echo $alert[$i]."<br/>";
+			echo $alert[$i]."<br>";
 		}
 		echo "</div>";
 	}
@@ -160,19 +160,19 @@ function connect()
 $customQuery should strat with 'where'
 */
 
-function createSelectOptions($dbtableName,$dbtableIdField,$dbtableValueField,$customQuery,$selectedId,$name,$params){
-	$q="SELECT * FROM $dbtableName
-	$customQuery";
-	//ORDER BY $dbtableValueField ASC";
-	//echo $q;
-	$r=mysql_query($q)or die(mysql_error());
+function createSelectOptions($dbtableName,$dbtableIdField,$dbtableValueField,$customQuery,$selectedId,$name,$params,$optionIdField=''){
+	$sql="SELECT * FROM $dbtableName
+	$customQuery
+	ORDER BY $dbtableValueField ASC";
+	//echo $sql;
+	$r=mysql_query($sql)or die(mysql_error()."<b>Query:</b> $sql <br><br>");
 
 	if(mysql_num_rows($r)){
 		$a=mysql_fetch_rowsarr($r);
 		echo "<select name='$name' $params>";
 		echo "<option value=''>select</option>";
 		foreach($a as $b){
-			echo "<option value='".$b[$dbtableIdField]."' ";
+			echo "<option id='".$b[$optionIdField]."' value='".$b[$dbtableIdField]."' ";
 			if($b[$dbtableIdField]==$selectedId){
 				echo " selected='selected' ";
 			}
@@ -183,6 +183,31 @@ function createSelectOptions($dbtableName,$dbtableIdField,$dbtableValueField,$cu
 
 }
 
+
+
+function createMultiSelectOptions($dbtableName,$dbtableIdField,$dbtableValueField,$customQuery,$selectedIdCsv,$name,$params){
+	$sql="SELECT * FROM $dbtableName
+	$customQuery
+	ORDER BY $dbtableValueField ASC";
+	//echo $sql;
+	$r=mysql_query($sql)or die(mysql_error());
+
+	$selectedIdCsvArray=explode(',',trim(str_replace("'","",$selectedIdCsv),", " ));
+	//myprint_r($selectedIdCsvArray);
+	if(mysql_num_rows($r)){
+		$a=mysql_fetch_rowsarr($r);
+		echo "<select name='$name' multiple='multiple' $params>";
+		foreach($a as $b){
+			echo "<option value='".$b[$dbtableIdField]."' ";
+			if(in_array($b[$dbtableIdField],$selectedIdCsvArray)){
+				echo " selected='selected' ";
+			}
+			echo " >".$b[$dbtableValueField]."</option>";
+		}
+		echo "</select>";
+	}
+
+}
 
 function myprint_r($my_array) {
 	if (is_array($my_array)) {
@@ -200,16 +225,16 @@ function myprint_r($my_array) {
 	echo $my_array;
 }
 
-function makeRandomKey(){
+function makeRandomKey($length=20){
 	$charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYsdfZ0123456789";
 	//if ($useupper) $charset .= "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 	//if ($usenumbers) $charset .= "0123456789";
 	//if ($usespecial) $charset .= "~@#$%^*()_+-={}|]["; // Note: using all special characters this reads: "~!@#$%^&*()_+`-={}|\\]?[\":;'><,./";
 	//if ($minlength > $maxlength) $length = mt_rand ($maxlength, $minlength);
 	//else $length = mt_rand ($minlength, $maxlength);
-	$length=20;
+	//$length=20;
 	for ($i=0; $i<$length; $i++) $key .= $charset[(mt_rand(0,(strlen($charset)-1)))];
-	return $key."_".time();
+	return time()."_".$key;
 }
 
 function createMySqlInsertString($request, $exception_field){
@@ -241,11 +266,6 @@ function createMySqlUpdateString($request, $exception_field){
 	$str_k=trim($str_k,',');
 	return $str_k;
 }
-
-function updateRowValue($tableName, $fieldName, $newValue, $condition){
-	$r=mysql_query("UPDATE $tableName set $fieldName='$newValue' ". $condition)or die(mysql_error());
-}
-
 
 function convert_number_to_words($number) {
 
@@ -366,7 +386,7 @@ function my_date_diff($start, $end="NOW")
 	$timeshift="";
 
 	$time = $edate - $sdate;
-	//echo "time:$time<br/>";
+	//echo "time:$time<br>";
 	if($time>=0 && $time<=59) {
 		// Seconds
 		$timeshift = $time.' seconds ';
@@ -447,6 +467,76 @@ function my_date_diff($start, $end="NOW")
 	return $timeshift;
 }
 
+function my_hour_diff($start, $end="NOW")
+{
+	$sdate = strtotime($start);
+	$edate = strtotime($end);
+
+	$time = $edate - $sdate;
+
+	//echo "time:$time<br>";
+	$hours=$time/(60*60);
+	return $hours;
+}
+
+function getRowFieldVal($dbTableName,$dbTargetFieldName,$UniqueIdFieldName,$UniqueIdValue,$extraQueryParam=""){
+	$sql="select $dbTargetFieldName from $dbTableName where $UniqueIdFieldName='$UniqueIdValue' $extraQueryParam";
+	$r=mysql_query($sql)or die(mysql_error()."<b>Query:</b><br>$sql<br>");
+	if(mysql_num_rows($r)){
+		$a=mysql_fetch_assoc($r);
+		return $a[$dbTargetFieldName];
+	}else{
+		return false;
+	}
+}
+
+function setRowFieldVal($dbTableName,$dbTargetFieldName,$dbTargetFieldValue,$UniqueIdFieldName,$UniqueIdValue,$extraQueryParam=""){
+	$sql="update $dbTableName set $dbTargetFieldName='$dbTargetFieldValue' where $UniqueIdFieldName='$UniqueIdValue' $extraQueryParam";
+	if(mysql_query($sql)or die(mysql_error()."<b>Query:</b><br>$sql<br>")){
+		insertLog('General change', 'Table field value updated', $dbTableName, $dbTargetFieldName, $dbTargetFieldValue,$sql,$_SESSION[current_user_id],print_r($_SERVER, true));
+		return true;
+	}else{
+		return false;
+	}
+}
+
+function getRowVal($dbTableName,$UniqueIdFieldName,$UniqueIdValue){
+	$sql="select * from $dbTableName where $UniqueIdFieldName='$UniqueIdValue' ";
+	//echo $sql;
+	$r=mysql_query($sql)or die(mysql_error()."<b>Query:</b><br>$sql<br>");
+	if(mysql_num_rows($r)){
+		$a=mysql_fetch_assoc($r);
+		return $a;
+	}else{
+		return false;
+	}
+}
+
+function getTableRows($dbTableName,$extraQueryParam=''){  
+  $sql="select * from $dbTableName $extraQueryParam ";
+  //echo $sql;
+  $r=mysql_query($sql)or die(mysql_error()."<b>Query:</b><br>$sql<br>");
+  if(mysql_num_rows($r)){
+    $a=mysql_fetch_rowsarr($r);
+    return $a;
+  }else{
+    return false;
+  }
+}
+
+function deleteRow($dbTableName, $condition){
+	if(strlen($condition)){
+		$sql="DELETE from $dbTableName where $condition ";
+		//echo $sql;
+		mysql_query($sql)or die(mysql_error()."<b>Query:</b><br>$sql<br>");
+		if(mysql_affected_rows()){
+			insertLog('General change', 'Table row deleted', $dbTableName, '', '',$sql,$_SESSION[current_user_id],print_r($_SERVER, true));
+			return true;
+		}else{
+			return false;
+		}
+	}
+}
 
 
 ?>
